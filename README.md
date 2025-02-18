@@ -4,7 +4,7 @@ It consists of different parts:
 - ***The Renderer***
 - Math library
 - Engine
-- Game
+- Game\
 This Project is the pure renderer that can be reused anywhere else.\
 The Project is open to use for everyone under the [MIT License](https://mit-license.org/).
 
