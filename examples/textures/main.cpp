@@ -1,13 +1,16 @@
-#include "NimbleRenderer.h"
 #include <iostream>
+#include <NimbleRenderer.h>
 
 namespace nr = NimbleRenderer;
+
+int window = 10;
 
 int main(int argc, char* argv[]) {
 	nr::InitWindow(300, 300, "Textures");
 
 	Texture t = nr::LoadTexture("wall.jpg");
 	Texture t2 = nr::LoadTexture("alpha.png");
+	window++;
 	unsigned char alpha = 0;
 	while (!nr::WindowShouldClose()) {
 		nr::BeginDrawing();

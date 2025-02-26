@@ -111,6 +111,7 @@ namespace NimbleRenderer {
 	void DrawVertices(float vertices[], size_t vert_size, unsigned int indices[], size_t ind_size);
 	void CloseWindow();
 	void SetupVertexBuffer();
+	void* GetWindowContext();
 	// Drawing Shapes
 	void DrawRectangle(int x, int y, int width, int height, Color c);
 	void DrawRectangleRec(shapes::Rectangle rec, Color c);
@@ -124,8 +125,10 @@ namespace NimbleRenderer {
 	void SetFPS(unsigned int fps);
 	// Image Processing
 	Image LoadImage(std::string filename);
+	void UnloadImage(Image &img);
 	Texture LoadTexture(std::string filename);
 	Texture LoadTexture(const Image &img);
+	void UnloadTexture(Texture texture);
 }
 
 #endif

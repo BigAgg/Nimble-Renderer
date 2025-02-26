@@ -22,11 +22,14 @@
 *	SOFTWARE.
 */
 
+#ifndef VERSION
+#define VERSION "0.0.0"
+#endif
+
 #include "NimbleRenderer.h"
 #include "NimbleHelpers.h"
 // Include opengl independent
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 // include c libraries
 #include <iostream>
 #include <math.h>
@@ -59,6 +62,8 @@ double targetFrameTime = 1000.0f / 60.0f;
 double totalTime = 0.0f;
 unsigned int currentFPS = 0;
 
+using namespace logging;
+
 namespace NimbleRenderer {
 	bool InitWindow(int width, int height, const char* name) {
     // glfw: initialize and configure
@@ -77,7 +82,7 @@ namespace NimbleRenderer {
     window = glfwCreateWindow(width, height, name, NULL, NULL);
     if (window == NULL)
     {
-      std::cout << "Failed to create GLFW window\n";
+      log("WARNING", "Failed to create GLFW window");
       glfwTerminate();
       return false;
     }
@@ -88,13 +93,13 @@ namespace NimbleRenderer {
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-      std::cout << "Failed to initialize GLAD\n";
+      log("WARNING", "Failed to initialize GLAD");
       return false;
     }
 
     mainShader.setup("", "");
     if (!mainShader.isReady()) {
-      std::cout << "Failed to create Main Shader\n";
+      log("WARNING", "Failed to create Main Shader");
     }
     glUseProgram(mainShader.ID);
     SetupVertexBuffer();
@@ -106,12 +111,34 @@ namespace NimbleRenderer {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Drawing lines only
     // Setting Bounding Box
     BoundingBox = { 0, 0, width, height };
+    // Setting up image loading
+    stbi_set_flip_vertically_on_load(true);
+    int major, minor, rev;
+    glfwGetVersion(&major, &minor, &rev);
+    std::string GL_VERSION_STR = (const char*)glGetString(GL_VERSION);
+    log("INFO", "GLFW Version: " + std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(rev));
+    log("INFO", "OpenGL Version: " + GL_VERSION_STR);
+    std::string VENDOR = (const char*)glGetString(GL_VENDOR);
+    std::string CARD = (const char*)glGetString(GL_RENDERER);
+
+    log("INFO", "Graphics Card Vendor: " + VENDOR);
+    log("INFO", "Graphics Card: " + CARD);
+    int gl_numExtensions;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &gl_numExtensions);
+    log("INFO", "Number of supportet OpenGL Extensions: " + std::to_string(gl_numExtensions));
+    /*for (int x = 0; x < gl_numExtensions; x++) {
+      std::string str = (const char*)glGetStringi(GL_EXTENSIONS, x);
+      log("INFO", "Extension: " + str);
+    }*/
+
+    std::string glslLangVersion = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
+    log("INFO", "GLSL Language Version: " + glslLangVersion);
     // Getting max vertex attributes
     int nrAttributes;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
-    std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n";
-    // Setting up image loading
-    stbi_set_flip_vertically_on_load(true);
+    log("INFO", "Maximum nr of vertex attirbutes supported: " + std::to_string(nrAttributes));
+    std::string nrVer = VERSION;
+    log("INFO", "Nimble " + nrVer + " loaded successfully\n");
 		return true;
 	}
 
@@ -146,6 +173,10 @@ namespace NimbleRenderer {
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
 
+  }
+
+  void* GetWindowContext() {
+    return window;
   }
 
 	bool WindowShouldClose(){
@@ -274,8 +305,9 @@ namespace NimbleRenderer {
 		glDeleteBuffers(1, &VBO);
 		glDeleteBuffers(1, &EBO);
 		glDeleteProgram(mainShader.ID);
+    glfwDestroyWindow(window);
 		glfwTerminate();
-		std::cout << "Closed Window successfully...\n";
+    log("INFO", "Closed Window successfully...");
 	}
 
 	void SetExitKey(int key){
@@ -300,13 +332,22 @@ namespace NimbleRenderer {
   Image LoadImage(std::string filename) {
     Image img;
     img.data = stbi_load(filename.c_str(), &img.width, &img.height, &img.nrChannels, 0);
+    log("INFO", "Loaded Image from File " + filename);
     return img;
+  }
+
+  void UnloadImage(Image &img) {
+    stbi_image_free(img.data);
+    img.width = 0;
+    img.height = 0;
+    img.nrChannels = 0;
+    log("INFO", "Unloaded Image data: " + std::to_string((unsigned long long)(void**)img.data));
   }
 
   Texture LoadTexture(std::string filename) {
     Image img = LoadImage(filename);
     Texture texture = LoadTexture(img);
-    stbi_image_free(img.data);
+    UnloadImage(img);
     return texture;
   }
 
@@ -323,7 +364,6 @@ namespace NimbleRenderer {
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    std::cout << "Image has " << img.nrChannels << " Channels\n";
     if(img.data){
       if (img.nrChannels > 3) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture.width, texture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img.data);
@@ -334,9 +374,10 @@ namespace NimbleRenderer {
       glGenerateMipmap(GL_TEXTURE_2D);
     }
     else {
-      std::cout << "Failed to load texture from image!" << "\n";
+      log("WARNING", "Failed to load texture!");
       texture.textureID = 0;
     }
+    log("INFO", "Loaded Texture successfully, Texture ID: " + std::to_string(texture.textureID));
     return texture;
   }
 }
