@@ -6,12 +6,16 @@ set(PROJECT_VERSION "0.0.1")
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 
+# Set other flags
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Organize source files into "Source Files"
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
 file(GLOB_RECURSE HEADER_FILES "include/*.h")
 file(GLOB_RECURSE SHADER_FILES "shaders/*.glsl")
 include_directories(shaders)
 include_directories(external/stb/)
+include_directories(external/glm/)
 
 # Setting compile definitions
 add_compile_definitions(VERSION="${PROJECT_VERSION}")
@@ -30,6 +34,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 # Find OpenGL and GLFW
 find_package(OpenGL REQUIRED)
 add_subdirectory(./external/glfw-3.4)
+add_subdirectory(./external/glm)
 add_subdirectory(examples)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenGL::GL glfw)
@@ -48,4 +53,13 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
   message(STATUS "Setting up for Visual Studio...")
   # Set the Working Directory for each Config 
   set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+elseif(CMAKE_GENERATOR MATCHES "Ninja")
+  # Symlinking compile_commands.json
+  add_custom_target(
+      copy_compile_commands ALL
+      COMMAND ${CMAKE_COMMAND} -E create_symlink
+          ${CMAKE_BINARY_DIR}/compile_commands.json
+          ${CMAKE_SOURCE_DIR}/compile_commands.json
+      DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+  )
 endif()
