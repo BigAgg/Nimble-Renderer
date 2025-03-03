@@ -8,6 +8,7 @@ int main(int argc, char *argv[]) {
   // nr::SetExitKey(0);
   nr::SetFPS(60);
   Texture t = nr::LoadTexture("wall.jpg");
+  nr::UnloadTexture(t);
   float rotation = 0.0f;
   float scale = 1.0f;
   while (!nr::WindowShouldClose()) {
@@ -26,6 +27,7 @@ int main(int argc, char *argv[]) {
                        {scale, scale, scale}, WHITE);
     nr::EndDrawing();
   }
+  nr::UnloadTexture(t);
   nr::CloseWindow();
   return 0;
 }

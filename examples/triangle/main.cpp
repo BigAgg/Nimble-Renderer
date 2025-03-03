@@ -1,14 +1,14 @@
 #include "NimbleRenderer.h"
+#include "glm/glm.hpp"
 #include <iostream>
 
 namespace nr = NimbleRenderer;
 
 // Points for the Rectangle
 float vertices[] = {
-    // positions          // colors					//
-    // texture coords
+    // positions        // colors					      //texture coords
     0.0f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // top right
-    0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, // bottom right
+    0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom right
     -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, // bottom left
 };
 
@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
   while (!nr::WindowShouldClose()) {
     nr::BeginDrawing();
     nr::ClearBackground(DARKGRAY);
+    nr::DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), glm::mat4(1.0f));
     nr::EndDrawing();
   }
   nr::CloseWindow();

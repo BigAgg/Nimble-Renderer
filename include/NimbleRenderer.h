@@ -53,6 +53,17 @@ typedef struct Vec4 {
   float w;
 } Vec4;
 
+typedef struct Camera2D {
+  Vec2 target;
+  float zoom;
+  float rotation;
+} Camera2D;
+
+typedef struct Camera3D {
+  Vec4 target;
+  float fov;
+} Camera3D;
+
 typedef struct Color {
   unsigned char r;
   unsigned char g;
@@ -128,7 +139,7 @@ Image LoadImage(std::string filename);
 void UnloadImage(Image &img);
 Texture LoadTexture(std::string filename);
 Texture LoadTexture(const Image &img);
-void UnloadTexture(Texture texture);
+void UnloadTexture(Texture& texture);
 } // namespace NimbleRenderer
 
 #endif

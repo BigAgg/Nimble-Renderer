@@ -33,8 +33,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 
 # Find OpenGL and GLFW
 find_package(OpenGL REQUIRED)
-add_subdirectory(./external/glfw-3.4)
-add_subdirectory(./external/glm)
+add_subdirectory(./external/glfw-3.4 EXCLUDE_FROM_ALL)
+add_subdirectory(./external/glm EXCLUDE_FROM_ALL)
 add_subdirectory(examples)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenGL::GL glfw)

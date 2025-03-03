@@ -1,5 +1,5 @@
 #include "shader.h"
-#include "NimbleHelpers.h"
+#include "utils.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -56,8 +56,6 @@ void Shader::setup(const char *vertexPath, const char *fragmentPath) {
   const char *fShaderCode = fragmentCode.c_str();
   // 2. Compile shaders
   unsigned int vertex, fragment;
-  int success;
-  char infoLog[512];
 
   // Vertex Shader
   vertex = glCreateShader(GL_VERTEX_SHADER);

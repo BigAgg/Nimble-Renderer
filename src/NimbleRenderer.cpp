@@ -29,7 +29,7 @@ IN THE *	SOFTWARE.
 #define NOGDI
 
 #include "NimbleRenderer.h"
-#include "NimbleHelpers.h"
+#include "utils.h"
 // Include GLM for computation
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -241,8 +241,7 @@ void ClearBackground(Color c) {
 void DrawVertices(float vertices[], size_t vert_size, unsigned int indices[],
                   size_t ind_size, glm::mat4 trans) {
   // Setting up transformation
-  unsigned int transformLoc = glGetUniformLocation(mainShader.ID, "transform");
-  glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+  mainShader.setMat4("transform", trans);
   // bind the Vertex Array Object first, then bind and set vertex buffer(s), and
   // then configure vertex attributes(s).
   glBindVertexArray(VAO);
@@ -460,6 +459,14 @@ Texture LoadTexture(const Image &img) {
   }
   log("INFO", "Loaded Texture successfully, Texture ID: " +
                   std::to_string(texture.textureID));
+  glBindVertexArray(0);
   return texture;
+}
+
+void UnloadTexture(Texture& texture) {
+  glBindVertexArray(VAO);
+  glDeleteTextures(1, &texture.textureID);
+  log("INFO", "Unloaded Texture ID: " + std::to_string(texture.textureID));
+  glBindVertexArray(0);
 }
 } // namespace NimbleRenderer
