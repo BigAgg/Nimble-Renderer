@@ -24,7 +24,7 @@ IN THE *	SOFTWARE.
 #ifndef NIMBLERENDERER_H
 #define NIMBLERENDERER_H
 
-#include "glm/fwd.hpp"
+#include "glm/glm.hpp"
 #include <string>
 
 // Defining structs
@@ -117,7 +117,7 @@ void BeginDrawing();
 void EndDrawing();
 void ClearBackground(Color c);
 void DrawVertices(float vertices[], size_t vert_size, unsigned int indices[],
-                  size_t ind_size, glm::mat4 trans);
+                  size_t ind_size, glm::mat4 trans, glm::mat4 view = glm::mat4(1.0f), glm::mat4 model = glm::mat4(1.0f));
 void CloseWindow();
 void SetupVertexBuffer();
 void *GetWindowContext();
@@ -127,6 +127,9 @@ void DrawRectangleRec(Rectangle rec, Color c);
 void DrawTexture(int x, int y, const Texture &texture, Color c);
 void DrawTexturePro(Vec2 position, Texture texture, float rotation,
                     Vec3 transformation, Vec3 scale, Color c);
+// Draw Objects
+void DrawTexture3D(Vec3 Position, Texture texture, float rotation, Vec3 transformation, Vec3 scale, Color c);
+void DrawTexturedCube(Vec3 Position, Texture textures[6], float rotation, Vec3 transformation, Vec3 scale, Color c);
 // User Input Handling
 void SetExitKey(int key);
 // Timing functions

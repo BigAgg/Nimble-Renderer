@@ -58,14 +58,22 @@ static unsigned int EBO;
 // Shaders
 static Shader mainShader;
 
-static Rectangle BoundingBox;
-
 // Timing stuff
 static auto lastFrameTime = std::chrono::high_resolution_clock::now();
 static double frameTime = 0.0f;
 static double targetFrameTime = 1000.0f / 60.0f;
 static double totalTime = 0.0f;
 static unsigned int currentFPS = 0;
+
+// Camera and Perspective settings
+static Rectangle BoundingBox;
+static float fov = 45.0f;
+static float farPlane = 100.0f;
+static float nearPlane = 0.1f;
+static float perspectiveX;
+static float perspectiveY;
+static float perspectiveWidth;
+static float perspectiveHeight;
 
 using namespace logging;
 
@@ -106,6 +114,8 @@ bool InitWindow(int width, int height, const char *name) {
   }
   glUseProgram(mainShader.ID);
   SetupVertexBuffer();
+  //glEnable(GL_BLEND | GL_DEPTH_TEST);
+  glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -146,6 +156,14 @@ bool InitWindow(int width, int height, const char *name) {
                   std::to_string(nrAttributes));
   std::string nrVer = VERSION;
   log("INFO", "Nimble " + nrVer + " loaded successfully\n");
+  // Setting up BoundingBox
+  BoundingBox.x = 0;
+  BoundingBox.y = 0;
+  glfwGetWindowSize(window, &BoundingBox.width, &BoundingBox.height);
+  perspectiveX = 0.0f;
+  perspectiveY = 0.0f;
+  perspectiveWidth = BoundingBox.width;
+  perspectiveHeight = BoundingBox.height;
   return true;
 }
 
@@ -160,14 +178,13 @@ void SetupVertexBuffer() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
+  // Position Data
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
-
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
+  // Color Data
+  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
-
+  // Indices Data
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
                         (void *)(7 * sizeof(float)));
   glEnableVertexAttribArray(2);
@@ -199,12 +216,17 @@ bool WindowShouldClose() {
 }
 
 void BeginDrawing() {
+  // Setting up perspective
+  perspectiveX = BoundingBox.x;
+  perspectiveY = BoundingBox.y;
+  perspectiveWidth = BoundingBox.width;
+  perspectiveHeight = BoundingBox.height;
   // Calculate timings
   auto currentTime = std::chrono::high_resolution_clock::now();
   double elapsedTime =
       std::chrono::duration<double, std::milli>(currentTime - lastFrameTime)
           .count();
-
+  totalTime = glfwGetTime();
   if (elapsedTime < targetFrameTime) {
     std::this_thread::sleep_for(
         std::chrono::milliseconds((int)(targetFrameTime - elapsedTime)));
@@ -235,13 +257,15 @@ void ClearBackground(Color c) {
   float b = (float)c.b / 255.0f;
   float a = (float)c.a / 255.0f;
   glClearColor(r, g, b, a);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void DrawVertices(float vertices[], size_t vert_size, unsigned int indices[],
-                  size_t ind_size, glm::mat4 trans) {
+                  size_t ind_size, glm::mat4 trans, glm::mat4 view, glm::mat4 model) {
   // Setting up transformation
   mainShader.setMat4("transform", trans);
+  mainShader.setMat4("model", model);
+  mainShader.setMat4("view", view);
   // bind the Vertex Array Object first, then bind and set vertex buffer(s), and
   // then configure vertex attributes(s).
   glBindVertexArray(VAO);
@@ -354,6 +378,120 @@ void DrawTexturePro(Vec2 position, Texture texture, float rotation,
       glm::vec3(transformation.x, transformation.y, transformation.z));
   trans = glm::scale(trans, glm::vec3(scale.x, scale.y, scale.z));
   DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), trans);
+}
+
+void DrawTexturedCube(Vec3 Position, Texture textures[6], float rotation, Vec3 transformation, Vec3 scale, Color c) {
+  float r, g, b, a;
+  r = c.r / 255.0f;
+  g = c.g / 255.0f;
+  b = c.b / 255.0f;
+  a = c.a / 255.0f;
+  float vertices[] = {
+      -0.5f, -0.5f, -0.5f, r, g, b, a, 0.0f, 0.0f, // 0
+       0.5f, -0.5f, -0.5f, r, g, b, a, 1.0f, 0.0f, // 1
+       0.5f,  0.5f, -0.5f, r, g, b, a, 1.0f, 1.0f, // 2
+      -0.5f,  0.5f, -0.5f, r, g, b, a, 0.0f, 1.0f, // 3
+
+      -0.5f, -0.5f,  0.5f, r, g, b, a, 0.0f, 0.0f, // 4
+       0.5f, -0.5f,  0.5f, r, g, b, a, 1.0f, 0.0f, // 5
+       0.5f,  0.5f,  0.5f, r, g, b, a, 1.0f, 1.0f, // 6
+      -0.5f,  0.5f,  0.5f, r, g, b, a, 0.0f, 1.0f, // 7
+
+      -0.5f,  0.5f,  0.5f, r, g, b, a, 1.0f, 0.0f, // 8
+      -0.5f,  0.5f, -0.5f, r, g, b, a, 1.0f, 1.0f, // 9
+      -0.5f, -0.5f, -0.5f, r, g, b, a, 0.0f, 1.0f, // 10
+      -0.5f, -0.5f,  0.5f, r, g, b, a, 0.0f, 0.0f, // 11
+
+       0.5f,  0.5f,  0.5f, r, g, b, a, 1.0f, 0.0f, // 12
+       0.5f,  0.5f, -0.5f, r, g, b, a, 1.0f, 1.0f, // 13
+       0.5f, -0.5f, -0.5f, r, g, b, a, 0.0f, 1.0f, // 14
+       0.5f, -0.5f,  0.5f, r, g, b, a, 0.0f, 0.0f, // 15
+
+      -0.5f, -0.5f, -0.5f, r, g, b, a, 0.0f, 1.0f, // 16
+       0.5f, -0.5f, -0.5f, r, g, b, a, 1.0f, 1.0f, // 17
+       0.5f, -0.5f,  0.5f, r, g, b, a, 1.0f, 0.0f, // 18
+      -0.5f, -0.5f,  0.5f, r, g, b, a, 0.0f, 0.0f, // 19
+
+      -0.5f,  0.5f, -0.5f, r, g, b, a, 0.0f, 1.0f, // 20
+       0.5f,  0.5f, -0.5f, r, g, b, a, 1.0f, 1.0f, // 21
+       0.5f,  0.5f,  0.5f, r, g, b, a, 1.0f, 0.0f, // 22
+      -0.5f,  0.5f,  0.5f, r, g, b, a, 0.0f, 0.0f, // 23
+  };
+
+  unsigned int indices[] = {
+    // First Rectangle
+    0, 1, 2,
+    0, 3, 2,
+    // Second Rectangle
+    4, 5, 6,
+    4, 7, 6,
+    // Third Rectangle
+    8, 9, 10,
+    8, 11, 10,
+    // Fourth Rectangle
+    12, 13, 14,
+    12, 15, 14,
+    // Fifth Rectangle
+    16, 17, 18,
+    16, 19, 18,
+    // Sixth Rectangle
+    20, 21, 22,
+    20, 23, 22
+  };
+  // Model Matrix
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::rotate(model, rotation, glm::vec3(transformation.x, transformation.y, transformation.z));
+  model = glm::scale(model, glm::vec3(scale.x, scale.y, scale.z));
+  // View Matrix
+  glm::mat4 view = glm::mat4(1.0f);
+  view = glm::translate(view, glm::vec3(-Position.x, -Position.y, -Position.z));
+  // Projection Matrix
+  glm::mat4 projection;
+  projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, textures[0].textureID);
+  mainShader.use();
+  mainShader.setBool("isTextureSet", 1);
+
+  DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), projection, view, model);
+}
+
+void DrawTexture3D(Vec3 Position, Texture texture, float rotation, Vec3 transformation, Vec3 scale, Color c) {
+  float r, g, b, a;
+  r = c.r / 255.0f;
+  g = c.g / 255.0f;
+  b = c.b / 255.0f;
+  a = c.a / 255.0f;
+
+  float vertices[] = {
+      // positions          // colors    // texture coords
+      0.5f,  0.5f,  0.0f, r, g, b, a, 1.0f, 1.0f, // top right
+      0.5f,  -0.5f, 0.0f, r, g, b, a, 1.0f, 0.0f, // bottom right
+      -0.5f, -0.5f, 0.0f, r, g, b, a, 0.0f, 0.0f, // bottom left
+      -0.5f, 0.5f,  0.0f, r, g, b, a, 0.0f, 1.0f  // top left
+  };
+  unsigned int indices[] = {
+      0, 1, 3, // first triangle
+      1, 2, 3  // second triangle
+  };
+  // Model Matrix
+  glm::mat4 model = glm::mat4(1.0f);
+  model = glm::rotate(model, glm::radians(rotation), glm::vec3(transformation.x, transformation.y, transformation.z));
+  model = glm::scale(model, glm::vec3(scale.x, scale.y, scale.z));
+  // View Matrix
+  glm::mat4 view = glm::mat4(1.0f);
+  view = glm::translate(view, glm::vec3(-Position.x, -Position.y, -Position.z));
+  // Projection Matrix
+  glm::mat4 projection;
+  projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture.textureID);
+  mainShader.use();
+  mainShader.setBool("isTextureSet", 1);
+
+  DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), projection, view, model);
 }
 
 void DrawRectangleRec(Rectangle, Color c) {}
