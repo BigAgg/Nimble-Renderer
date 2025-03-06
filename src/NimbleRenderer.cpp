@@ -67,7 +67,7 @@ static unsigned int currentFPS = 0;
 
 // Camera and Perspective settings
 static Rectangle BoundingBox;
-static float fov = 45.0f;
+static float fov = 90.0f;
 static float farPlane = 100.0f;
 static float nearPlane = 0.1f;
 static float perspectiveX;
@@ -438,23 +438,42 @@ void DrawTexturedCube(Vec3 Position, Texture textures[6], float rotation, Vec3 t
     20, 21, 22,
     20, 23, 22
   };
-  // Model Matrix
-  glm::mat4 model = glm::mat4(1.0f);
-  model = glm::rotate(model, rotation, glm::vec3(transformation.x, transformation.y, transformation.z));
-  model = glm::scale(model, glm::vec3(scale.x, scale.y, scale.z));
-  // View Matrix
-  glm::mat4 view = glm::mat4(1.0f);
-  view = glm::translate(view, glm::vec3(-Position.x, -Position.y, -Position.z));
-  // Projection Matrix
-  glm::mat4 projection;
-  projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, textures[0].textureID);
-  mainShader.use();
-  mainShader.setBool("isTextureSet", 1);
+  glm::vec3 cubePositions[] = {
+      glm::vec3(0.0f,  0.0f,  0.0f),
+      glm::vec3(2.0f,  5.0f, -15.0f),
+      glm::vec3(-1.5f, -2.2f, -2.5f),
+      glm::vec3(-3.8f, -2.0f, -12.3f),
+      glm::vec3(2.4f, -0.4f, -3.5f),
+      glm::vec3(-1.7f,  3.0f, -7.5f),
+      glm::vec3(1.3f, -2.0f, -2.5f),
+      glm::vec3(1.5f,  2.0f, -2.5f),
+      glm::vec3(1.5f,  0.2f, -1.5f),
+      glm::vec3(-1.3f,  1.0f, -1.5f)
+  };
 
-  DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), projection, view, model);
+  for (unsigned int x = 0; x < 10; x++) {
+		// Model Matrix
+		glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, cubePositions[x]);
+    if (x % 2 == 0)
+      rotation = -rotation;
+		model = glm::rotate(model, rotation, glm::vec3(transformation.x, transformation.y, transformation.z));
+		model = glm::scale(model, glm::vec3(scale.x, scale.y, scale.z));
+		// View Matrix
+		glm::mat4 view = glm::mat4(1.0f);
+		view = glm::translate(view, glm::vec3(-Position.x, -Position.y, -Position.z));
+		// Projection Matrix
+		glm::mat4 projection;
+		projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textures[0].textureID);
+		mainShader.use();
+		mainShader.setBool("isTextureSet", 1);
+
+		DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), projection, view, model);
+  }
 }
 
 void DrawTexture3D(Vec3 Position, Texture texture, float rotation, Vec3 transformation, Vec3 scale, Color c) {

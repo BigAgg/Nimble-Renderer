@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
   float scale = 1.0f;
   Color c = { 0, 0, 0, 255 };
   char toAdd = 1;
+    
+  Vec3 view(0.0f, 0.0f, 3.0f);
   while (!nr::WindowShouldClose()) {
     if (toAdd == 1) {
       c.r += 2;
@@ -56,7 +58,7 @@ int main(int argc, char *argv[]) {
     //nr::DrawRectangle(0, 0, 10, 10, GREEN);
     //nr::DrawRectangle(-1, -1, 1, 1, BLUE);
     //nr::DrawTexture3D({ 0.0f, 0.5f, 3.0f }, t, -55.0f, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, RED);
-    nr::DrawTexturedCube({ 0.0f, 0.0f, 3.0f }, tInfo, (float)nr::GetTime(), { -(float)nr::GetTime(), (float)nr::GetTime(), (float)nr::GetTime()}, {1.0f, 1.0f, 1.0f}, c);
+    nr::DrawTexturedCube(view, tInfo, (float)nr::GetTime(), { -(float)nr::GetTime(), (float)nr::GetTime(), (float)nr::GetTime()}, {scale, scale, scale}, c);
     nr::EndDrawing();
   }
   nr::UnloadTexture(t);
