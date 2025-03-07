@@ -60,8 +60,11 @@ typedef struct Camera2D {
 } Camera2D;
 
 typedef struct Camera3D {
-  Vec4 target;
+  Vec3 target;
   float fov;
+  float tilt;
+  float rotation;
+  float zoom;
 } Camera3D;
 
 typedef struct Color {
@@ -114,6 +117,8 @@ namespace NimbleRenderer {
 bool InitWindow(int width, int height, const char *name);
 bool WindowShouldClose();
 void BeginDrawing();
+void BeginMode3D(const Camera3D &camera);
+void EndMode3D();
 void EndDrawing();
 void ClearBackground(Color c);
 void DrawVertices(float vertices[], size_t vert_size, unsigned int indices[],
