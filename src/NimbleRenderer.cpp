@@ -67,9 +67,15 @@ static unsigned int currentFPS = 0;
 
 // Camera and Perspective settings
 static Rectangle BoundingBox;
-static glm::mat4 view = glm::mat4(1.0f);
 static glm::vec3 zoom = glm::vec3(1.0f);
 static glm::mat4 projection = glm::mat4(1.0f);
+static glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
+static glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+static glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+static glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+static glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+static glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+static glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, up);
 static float rotation = 0.0f;
 static float tilt = 0.0f;
 static float fov = 75.0f;
@@ -257,23 +263,22 @@ void EndDrawing() {
 }
 
 void BeginMode3D(const Camera3D &camera) {
-  Vec3 target = camera.target;
+  cameraPos = glm::vec3(camera.position.x, camera.position.y, camera.position.z);
+  cameraTarget = glm::vec3(camera.target.x, camera.target.y, camera.target.z);
   fov = camera.fov;
   zoom = glm::vec3(camera.zoom);
-  rotation = camera.rotation;
-  tilt = camera.tilt;
-	// View Matrix
-	view = glm::translate(view, glm::vec3(-target.x, -target.y, -target.z));
 	// Projection Matrix
 	projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
+	cameraDirection = glm::normalize(cameraPos - cameraTarget);
+	cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+	cameraUp = glm::cross(cameraDirection, cameraRight);
+	view = glm::lookAt(cameraPos, cameraTarget, up);
 }
 
 void EndMode3D() {
 	view = glm::mat4(1.0f);
 	zoom = glm::vec3(1.0f);
   projection = glm::mat4(1.0f);
-	rotation = 0.0f;
-	tilt = 0.0f;
 	fov = 75.0f;
 }
 
@@ -390,8 +395,8 @@ void DrawTexturePro(Vec2 position, Texture texture, float rotation,
       -0.5f, 0.5f,  0.0f, r, g, b, a, 0.0f, 1.0f  // top left
   };
   unsigned int indices[] = {
-      0, 1, 3, // first triangle
-      1, 2, 3  // second triangle
+      0, 1, 2, // first triangle
+      0, 2, 3  // second triangle
   };
 
   glActiveTexture(GL_TEXTURE0);
@@ -407,6 +412,9 @@ void DrawTexturePro(Vec2 position, Texture texture, float rotation,
 }
 
 void DrawTexturedCube(Vec3 Position, Texture textures[6], float rotation, Vec3 transformation, Vec3 scale, Color c) {
+  float diff = glm::distance(cameraPos, glm::vec3(Position.x, Position.y, Position.z));
+  if (diff > farPlane)
+    return;
   float r, g, b, a;
   r = c.r / 255.0f;
   g = c.g / 255.0f;
@@ -643,4 +651,18 @@ void UnloadTexture(Texture& texture) {
   log("INFO", "Unloaded Texture ID: " + std::to_string(texture.textureID));
   glBindVertexArray(0);
 }
+
+// Input Processing
+bool IsKeyPressed(const int key) {
+  return glfwGetKey(window, key) == GLFW_PRESS;
+}
+
+bool IsKeyReleased(const int key) {
+  return glfwGetKey(window, key) == GLFW_RELEASE;
+}
+
+bool IsKeyRepeat(const int key) {
+  return glfwGetKey(window, key) == GLFW_REPEAT;
+}
+
 } // namespace NimbleRenderer

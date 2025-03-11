@@ -1,33 +1,44 @@
 #include "NimbleRenderer.h"
 #include <iostream>
 
-namespace nr = NimbleRenderer;
+using namespace NimbleRenderer;
 
 int main(int argc, char *argv[]) {
-  nr::InitWindow(300, 300, "Testing");
-  // nr::SetExitKey(0);
-  nr::SetFPS(60);
-  Texture t = nr::LoadTexture("wall.jpg");
+  // Program setup
+  InitWindow(300, 300, "Cubes");
+  SetFPS(60);
+  // Preparing Textures
+  Texture t = LoadTexture("wall.jpg");
   Texture tInfo[6] = { t, t, t, t, t, t };
-  //nr::UnloadTexture(t);
-  float rotation = 0.0f;
-  float scale = 1.0f;
-  while (!nr::WindowShouldClose()) {
-    rotation += 0.5f;
-    if (rotation > 360.0f)
-      rotation = 0.0f;
-    scale -= 0.001f;
-    if (scale < 0.0f)
-      scale = 1.0f;
-    nr::BeginDrawing();
-    nr::ClearBackground(DARKGRAY);
-    //nr::DrawRectangle(0, 0, 10, 10, GREEN);
-    //nr::DrawRectangle(-1, -1, 1, 1, BLUE);
-    //nr::DrawTexture3D({ 0.0f, 0.5f, 3.0f }, t, -55.0f, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, RED);
-    nr::DrawTexturedCube({ 0.0f, 0.0f, 0.0f }, tInfo, (float)nr::GetTime(), { 0.5f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, WHITE);
-    nr::EndDrawing();
+  // Preparing Camera
+	Camera3D camera;
+	camera.target = { 0.0f, 0.0f, 0.0f };
+  camera.position = { 0.0f, 0.0f, 3.0f };
+  camera.fov = 75.0f;
+  camera.zoom = 1.0f;
+  float speed = 50.0f;
+  // Main Loop
+  while (!WindowShouldClose()) {
+    if (IsKeyPressed(KEY_W))
+      camera.position.z -= speed * GetFrameTime();
+    if (IsKeyPressed(KEY_S))
+      camera.position.z += speed * GetFrameTime();
+    if (IsKeyPressed(KEY_A))
+      camera.position.x -= speed * GetFrameTime();
+    if (IsKeyPressed(KEY_D))
+      camera.position.x += speed * GetFrameTime();
+    BeginDrawing();
+    ClearBackground(DARKGRAY);
+    BeginMode3D(camera);
+    DrawTexturedCube({ 0.0f, 0.0f, 0.0f }, tInfo, (float)GetTime(), { 0.5f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, WHITE);
+    DrawTexturedCube({ 10.0f, 0.0f, -10.0f }, tInfo, -(float)GetTime(), { 0.5f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, WHITE);
+    DrawTexturedCube({ -10.0f, 0.0f, -10.0f }, tInfo, (float)GetTime(), { 0.5f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, WHITE);
+    DrawTexturedCube({ 2.0f, -3.0f, -5.0f }, tInfo, -(float)GetTime(), { 1.0f, 0.5f, 0.75f }, { 1.0f, 1.0f, 1.0f }, WHITE);
+    EndMode3D();
+    EndDrawing();
   }
-  nr::UnloadTexture(t);
-  nr::CloseWindow();
+  // Unloading Textures and closing Window
+  UnloadTexture(t);
+  CloseWindow();
   return 0;
 }

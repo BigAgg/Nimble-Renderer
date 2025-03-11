@@ -1,5 +1,4 @@
 #include "NimbleRenderer.h"
-#include "glm/glm.hpp"
 #include <iostream>
 
 namespace nr = NimbleRenderer;
@@ -20,11 +19,10 @@ int main(int argc, char *argv[]) {
     
   Vec3 position(-12.0f, 10.0f, -5.0f);
   Camera3D camera;
-  camera.target = { 0.0f, 0.0f, 3.0f };
+  camera.position = { 0.0f, 0.0f, 3.0f };
+  camera.target = { 0.0f, 0.0f, 0.0f };
   camera.fov = 75.0f;
-  camera.rotation = 0.0f;
   camera.zoom = 1.0f;
-  camera.tilt = 0.0f;
   while (!nr::WindowShouldClose()) {
     rotation += 0.5f;
     if (rotation > 360.0f)
@@ -33,6 +31,9 @@ int main(int argc, char *argv[]) {
     if (position.y < -10.0f) {
       position.y = 10.0f;
     }
+
+    camera.position.x = sin(nr::GetTime()) * 10.0f;
+    camera.position.z = cos(nr::GetTime()) * 10.0f;
     nr::BeginDrawing();
     nr::ClearBackground(DARKGRAY);
     nr::BeginMode3D(camera);
