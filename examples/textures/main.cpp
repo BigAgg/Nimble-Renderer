@@ -19,8 +19,6 @@ int main(int argc, char* argv[]) {
 		nr::DrawTexture(0, 0, t, {255, 255, 255, alpha});
 		nr::EndDrawing();
 		alpha++;
-		if (alpha == 255)
-			alpha = 0;
 	}
 	nr::CloseWindow();
 	return 0;

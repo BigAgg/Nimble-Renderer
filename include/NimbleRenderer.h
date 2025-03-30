@@ -290,6 +290,7 @@ bool IsKeyJustPressed(const int key);
 bool IsKeyJustReleased(const int key);
 // Mouse Settings
 void HideCursor();
+void ShowCursor();
 bool IsCursorHidden();
 Vec2 GetCursorPosition();
 Vec2 GetCursorOffset();

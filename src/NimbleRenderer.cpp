@@ -127,14 +127,13 @@ bool InitWindow(int width, int height, const char *name) {
   }
   glUseProgram(mainShader.ID);
   SetupVertexBuffer();
-  //glEnable(GL_BLEND | GL_DEPTH_TEST);
-  glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
+  glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // Wireframe mode
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Drawing lines only
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Drawing lines only
   // Setting Bounding Box
   BoundingBox = {0, 0, width, height};
   // Setting up image loading
@@ -396,7 +395,7 @@ void DrawTexturePro(Vec2 position, Texture texture, float rotation,
       0, 1, 2, // first triangle
       0, 2, 3  // second triangle
   };
-
+  glDepthMask(GL_FALSE);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture.textureID);
   mainShader.use();
@@ -407,6 +406,7 @@ void DrawTexturePro(Vec2 position, Texture texture, float rotation,
       glm::vec3(transformation.x, transformation.y, transformation.z));
   trans = glm::scale(trans, glm::vec3(scale.x, scale.y, scale.z));
   DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), trans);
+  glDepthMask(GL_TRUE);
 }
 
 void DrawTexturedCube(Vec3 Position, Texture textures[6], float rotation, Vec3 transformation, Vec3 scale, Color c) {
@@ -550,7 +550,7 @@ void DrawTexture(int x, int y, const Texture &texture, Color c) {
       0, 1, 3, // first triangle
       1, 2, 3  // second triangle
   };
-
+  glDepthMask(GL_FALSE);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture.textureID);
   mainShader.use();
@@ -559,6 +559,7 @@ void DrawTexture(int x, int y, const Texture &texture, Color c) {
   glm::mat4 trans = glm::mat4(1.0f);
 
   DrawVertices(vertices, sizeof(vertices), indices, sizeof(indices), trans);
+  glDepthMask(GL_TRUE);
 }
 
 void CloseWindow() {
@@ -670,6 +671,10 @@ bool IsKeyJustReleased(const int key) {
 // Mouse settings
 void HideCursor() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void ShowCursor() {
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 bool IsCursorHidden() {
