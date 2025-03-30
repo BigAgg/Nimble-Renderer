@@ -67,7 +67,6 @@ static unsigned int currentFPS = 0;
 
 // Camera and Perspective settings
 static Rectangle BoundingBox;
-static glm::vec3 zoom = glm::vec3(1.0f);
 static glm::mat4 projection = glm::mat4(1.0f);
 static glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
 static glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -105,23 +104,26 @@ bool InitWindow(int width, int height, const char *name) {
   // --------------------
   window = glfwCreateWindow(width, height, name, NULL, NULL);
   if (window == NULL) {
-    log("WARNING", "Failed to create GLFW window");
+    logwarning("Failed to create GLFW window");
     glfwTerminate();
     return false;
   }
   glfwMakeContextCurrent(window);
+  // Setting up callback functions
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSetKeyCallback(window, key_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
 
   // glad: load all OpenGL function pointers
   // ---------------------------------------
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    log("WARNING", "Failed to initialize GLAD");
+    logwarning("Failed to initialize GLAD");
     return false;
   }
 
   mainShader.setup("", "");
   if (!mainShader.isReady()) {
-    log("WARNING", "Failed to create Main Shader");
+    logwarning("Failed to create Main Shader");
   }
   glUseProgram(mainShader.ID);
   SetupVertexBuffer();
@@ -139,34 +141,29 @@ bool InitWindow(int width, int height, const char *name) {
   stbi_set_flip_vertically_on_load(true);
   int major, minor, rev;
   glfwGetVersion(&major, &minor, &rev);
-  std::string GL_VERSION_STR = (const char *)glGetString(GL_VERSION);
-  log("INFO", "GLFW Version: " + std::to_string(major) + "." +
-                  std::to_string(minor) + "." + std::to_string(rev));
-  log("INFO", "OpenGL Version: " + GL_VERSION_STR);
-  std::string VENDOR = (const char *)glGetString(GL_VENDOR);
-  std::string CARD = (const char *)glGetString(GL_RENDERER);
+  const char* GL_VERSION_STR = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  loginfo("GLFW Version: %d.%d.%d", major, minor, rev);
+  loginfo("OpenGL Version: %s", GL_VERSION_STR);
+  const char* VENDOR = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+  const char* CARD = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
 
-  log("INFO", "Graphics Card Vendor: " + VENDOR);
-  log("INFO", "Graphics Card: " + CARD);
+  loginfo("Graphics Card Vendor: %s", VENDOR);
+  loginfo("Graphics Card: %s", CARD);
   int gl_numExtensions;
   glGetIntegerv(GL_NUM_EXTENSIONS, &gl_numExtensions);
-  log("INFO", "Number of supportet OpenGL Extensions: " +
-                  std::to_string(gl_numExtensions));
+  loginfo("Number of supportet OpenGL Extensions: %d", gl_numExtensions);
   /*for (int x = 0; x < gl_numExtensions; x++) {
     std::string str = (const char*)glGetStringi(GL_EXTENSIONS, x);
     log("INFO", "Extension: " + str);
   }*/
 
-  std::string glslLangVersion =
-      (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
-  log("INFO", "GLSL Language Version: " + glslLangVersion);
+  const char* glslLangVersion = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+  loginfo("GLSL Language Version: %s", glslLangVersion);
   // Getting max vertex attributes
   int nrAttributes;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
-  log("INFO", "Maximum nr of vertex attirbutes supported: " +
-                  std::to_string(nrAttributes));
-  std::string nrVer = VERSION;
-  log("INFO", "Nimble " + nrVer + " loaded successfully\n");
+  loginfo("Maximum nr of vertex attributes supported: ", nrAttributes);
+  loginfo("Nimble %s loaded successfully\n", VERSION);
   // Setting up BoundingBox
   BoundingBox.x = 0;
   BoundingBox.y = 0;
@@ -258,27 +255,28 @@ void BeginDrawing() {
 }
 
 void EndDrawing() {
+  ResetKeys();
+  ResetMouse();
   glfwSwapBuffers(window);
   glfwPollEvents();
 }
 
 void BeginMode3D(const Camera3D &camera) {
-  cameraPos = glm::vec3(camera.position.x, camera.position.y, camera.position.z);
-  cameraTarget = glm::vec3(camera.target.x, camera.target.y, camera.target.z);
+  cameraPos = camera.position;
+  cameraTarget = camera.target;
   fov = camera.fov;
-  zoom = glm::vec3(camera.zoom);
 	// Projection Matrix
 	projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
 	cameraDirection = glm::normalize(cameraPos - cameraTarget);
-	cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+	cameraRight = glm::normalize(glm::cross(camera.up, cameraDirection));
 	cameraUp = glm::cross(cameraDirection, cameraRight);
-	view = glm::lookAt(cameraPos, cameraTarget, up);
+	view = glm::lookAt(cameraPos, cameraPos + cameraTarget, cameraUp);
 }
 
 void EndMode3D() {
 	view = glm::mat4(1.0f);
-	zoom = glm::vec3(1.0f);
   projection = glm::mat4(1.0f);
+  up = glm::vec3(0.0f, 1.0f, 0.0f);
 	fov = 75.0f;
 }
 
@@ -523,12 +521,6 @@ void DrawTexture3D(Vec3 Position, Texture texture, float rotation, Vec3 transfor
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::rotate(model, glm::radians(rotation), glm::vec3(transformation.x, transformation.y, transformation.z));
   model = glm::scale(model, glm::vec3(scale.x, scale.y, scale.z));
-  // View Matrix
-  glm::mat4 view = glm::mat4(1.0f);
-  view = glm::translate(view, glm::vec3(-Position.x, -Position.y, -Position.z));
-  // Projection Matrix
-  glm::mat4 projection;
-  projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture.textureID);
@@ -576,7 +568,7 @@ void CloseWindow() {
   glDeleteProgram(mainShader.ID);
   glfwDestroyWindow(window);
   glfwTerminate();
-  log("INFO", "Closed Window successfully...");
+  loginfo("Closed Window successfully...");
 }
 
 void SetExitKey(int key) { applicationExitKey = key; }
@@ -592,7 +584,7 @@ Image LoadImage(std::string filename) {
   Image img;
   img.data =
       stbi_load(filename.c_str(), &img.width, &img.height, &img.nrChannels, 0);
-  log("INFO", "Loaded Image from File " + filename);
+  loginfo("Loaded Image from File %s", filename.c_str());
   return img;
 }
 
@@ -601,8 +593,7 @@ void UnloadImage(Image &img) {
   img.width = 0;
   img.height = 0;
   img.nrChannels = 0;
-  log("INFO", "Unloaded Image data: " +
-                  std::to_string((unsigned long long)(void **)img.data));
+  loginfo("Unloaded Image data: %p", img.data);
 }
 
 Texture LoadTexture(std::string filename) {
@@ -636,11 +627,10 @@ Texture LoadTexture(const Image &img) {
     }
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
-    log("WARNING", "Failed to load texture!");
+    logwarning("Failed to load texture!");
     texture.textureID = 0;
   }
-  log("INFO", "Loaded Texture successfully, Texture ID: " +
-                  std::to_string(texture.textureID));
+  loginfo("Loaded Texture successfully, Texture ID: %d", texture.textureID);
   glBindVertexArray(0);
   return texture;
 }
@@ -648,7 +638,7 @@ Texture LoadTexture(const Image &img) {
 void UnloadTexture(Texture& texture) {
   glBindVertexArray(VAO);
   glDeleteTextures(1, &texture.textureID);
-  log("INFO", "Unloaded Texture ID: " + std::to_string(texture.textureID));
+  loginfo("Unloaded Texture ID: %d", texture.textureID);
   glBindVertexArray(0);
 }
 
@@ -663,6 +653,45 @@ bool IsKeyReleased(const int key) {
 
 bool IsKeyRepeat(const int key) {
   return glfwGetKey(window, key) == GLFW_REPEAT;
+}
+
+bool IsKeyUp(const int key) {
+  return !IsKeyPressed(key);
+}
+
+bool IsKeyJustPressed(const int key) {
+  return GetKeyPressed(key);
+}
+
+bool IsKeyJustReleased(const int key) {
+  return GetKeyReleased(key);
+}
+
+// Mouse settings
+void HideCursor() {
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+bool IsCursorHidden() {
+  int mode = glfwGetInputMode(window, GLFW_CURSOR);
+  if (mode == GLFW_CURSOR)
+    return true;
+  return false;
+}
+
+Vec2 GetCursorPosition() {
+  Vec4 cursorInfo = GetCursorInfo();
+  return Vec2(cursorInfo[0], cursorInfo[1]);
+}
+
+Vec2 GetCursorOffset() {
+  Vec4 cursorInfo = GetCursorInfo();
+  return Vec2(cursorInfo[2], cursorInfo[3]);
+}
+
+// Camera update functions
+void UpdateCamera3D(Camera3D& camera, const Vec3 direction, const float speed) {
+  
 }
 
 } // namespace NimbleRenderer

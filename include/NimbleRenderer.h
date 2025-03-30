@@ -35,23 +35,9 @@ typedef struct Rectangle {
   int height;
 } Rectangle;
 
-typedef struct Vec2 {
-  float x;
-  float y;
-} Vec2;
-
-typedef struct Vec3 {
-  float x;
-  float y;
-  float z;
-} Vec3;
-
-typedef struct Vec4 {
-  float x;
-  float y;
-  float z;
-  float w;
-} Vec4;
+using Vec2 = glm::vec2;
+using Vec3 = glm::vec3;
+using Vec4 = glm::vec4;
 
 typedef struct Camera2D {
   Vec2 target;
@@ -60,10 +46,11 @@ typedef struct Camera2D {
 } Camera2D;
 
 typedef struct Camera3D {
-  Vec3 target;
   Vec3 position;
+  Vec3 target;
+  Vec3 up;
   float fov;
-  float zoom;
+  int projection;
 } Camera3D;
 
 typedef struct Color {
@@ -298,6 +285,16 @@ void UnloadTexture(Texture& texture);
 bool IsKeyPressed(const int key);
 bool IsKeyReleased(const int key);
 bool IsKeyRepeat(const int key);
+bool IsKeyUp(const int key);
+bool IsKeyJustPressed(const int key);
+bool IsKeyJustReleased(const int key);
+// Mouse Settings
+void HideCursor();
+bool IsCursorHidden();
+Vec2 GetCursorPosition();
+Vec2 GetCursorOffset();
+// Camera Update functions
+void UpdateCamera3D(Camera3D& camera, Vec3 direction, const float speed);
 } // namespace NimbleRenderer
 
 #endif

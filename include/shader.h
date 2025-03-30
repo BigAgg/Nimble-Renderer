@@ -30,7 +30,7 @@ public:
   bool isReady();
 
   // the programm ID
-  unsigned int ID;
+  unsigned int ID = 0;
 
 private:
   bool ready = false;

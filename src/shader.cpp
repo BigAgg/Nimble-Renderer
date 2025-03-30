@@ -49,7 +49,7 @@ void Shader::setup(const char *vertexPath, const char *fragmentPath) {
     }
   } catch (std::ifstream::failure e) {
     std::string str = e.what();
-    logging::log("ERROR", "SHADER::FILE_NOT_SUCCESFULLY_READ\n" + str + "\n");
+    logging::logerror("SHADER::FILE_NOT_SUCCESFULLY_READ\n%c\n", str.c_str());
     ready = false;
   }
   const char *vShaderCode = vertexCode.c_str();
@@ -137,22 +137,14 @@ void Shader::checkCompileErrors(GLuint shader, std::string type) {
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
       glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-      logging::log(
-          "ERROR",
-          "SHADER_COMPILATION_ERROR of type: " + type + "\n" + infoLog +
-              "\n -- --------------------------------------------------- -- "
-              "\n");
+      logging::logerror("SHADER_COMPILATION_ERROR of type: %c\n%c\n -- --------------------------------------------------- -- \n", type, infoLog);
       ready = false;
     }
   } else {
     glGetProgramiv(shader, GL_LINK_STATUS, &success);
     if (!success) {
       glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-      logging::log(
-          "ERROR",
-          "PROGRAM_LINKING_ERROR of type: " + type + "\n" + infoLog +
-              "\n -- --------------------------------------------------- -- "
-              "\n");
+      logging::logerror("PROGRAM_LINKING_ERROR of type: %c\n%c\n -- --------------------------------------------------- -- \n", type, infoLog);
       ready = false;
     }
   }
