@@ -11,6 +11,24 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Setting up options
 option(BUILD_EXAMPLES "Build the examples" OFF)
+option(DOXYGEN_ACTIVE "Document with Doxygen" OFF)
+
+if(DOXYGEN_ACTIVE)
+  find_package(Doxygen QUIET)
+  if(DOXYGEN_FOUND)
+    set(DOXYGEN_IN ${CMAKE_SOURCE_DIR}/docs/Doxyfile.in)
+    set(DOXYGEN_OUT ${CMAKE_BINARY_DIR}/docs/Doxyfile)
+
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+
+    add_custom_target(doxygen-docs ALL
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+  endif()
+endif()
 
 # Organize source files into "Source Files"
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
