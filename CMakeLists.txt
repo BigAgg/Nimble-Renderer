@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD 20)
 # Set other flags
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Setting up options
+option(BUILD_EXAMPLES "Build the examples" OFF)
+
 # Organize source files into "Source Files"
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
 file(GLOB_RECURSE HEADER_FILES "include/*.h")
@@ -35,7 +38,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 find_package(OpenGL REQUIRED)
 add_subdirectory(./external/glfw-3.4 EXCLUDE_FROM_ALL)
 add_subdirectory(./external/glm EXCLUDE_FROM_ALL)
-add_subdirectory(examples)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC OpenGL::GL glfw)
 
@@ -54,12 +59,23 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
   # Set the Working Directory for each Config 
   set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
 elseif(CMAKE_GENERATOR MATCHES "Ninja")
-  # Symlinking compile_commands.json
-  add_custom_target(
-      copy_compile_commands ALL
-      COMMAND ${CMAKE_COMMAND} -E create_symlink
-          ${CMAKE_BINARY_DIR}/compile_commands.json
-          ${CMAKE_SOURCE_DIR}/compile_commands.json
-      DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
-  )
+  if(WIN32)
+    # Copy compile_commands.json
+    add_custom_target(
+        copy_compile_commands ALL
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/compile_commands.json
+        DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+    )
+  else()
+    # symlink compile_commands.json
+    add_custom_target(
+        copy_compile_commands ALL
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/compile_commands.json
+        DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+    )
+  endif()
 endif()

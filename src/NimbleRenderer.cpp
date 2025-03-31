@@ -113,6 +113,7 @@ bool InitWindow(int width, int height, const char *name) {
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwSetKeyCallback(window, key_callback);
   glfwSetCursorPosCallback(window, mouse_callback);
+  glfwSetScrollCallback(window, scroll_callback);
 
   // glad: load all OpenGL function pointers
   // ---------------------------------------
@@ -223,11 +224,6 @@ bool WindowShouldClose() {
 }
 
 void BeginDrawing() {
-  // Setting up perspective
-  perspectiveX = BoundingBox.x;
-  perspectiveY = BoundingBox.y;
-  perspectiveWidth = BoundingBox.width;
-  perspectiveHeight = BoundingBox.height;
   // Calculate timings
   auto currentTime = std::chrono::high_resolution_clock::now();
   double elapsedTime =
@@ -238,11 +234,18 @@ void BeginDrawing() {
     std::this_thread::sleep_for(
         std::chrono::milliseconds((int)(targetFrameTime - elapsedTime)));
     frameTime = targetFrameTime / 1000.0f;
+    elapsedTime = frameTime;
   } else {
     frameTime = elapsedTime / 1000.0f;
   }
   currentFPS = static_cast<unsigned int>(1.0f / frameTime);
   lastFrameTime = std::chrono::high_resolution_clock::now();
+
+  // Setting up perspective
+  perspectiveX = BoundingBox.x;
+  perspectiveY = BoundingBox.y;
+  perspectiveWidth = BoundingBox.width;
+  perspectiveHeight = BoundingBox.height;
 
   // Setting up BoundingBox
   if (WasResized()) {
@@ -679,7 +682,7 @@ void ShowCursor() {
 
 bool IsCursorHidden() {
   int mode = glfwGetInputMode(window, GLFW_CURSOR);
-  if (mode == GLFW_CURSOR)
+  if (mode == GLFW_CURSOR_DISABLED)
     return true;
   return false;
 }
@@ -692,6 +695,10 @@ Vec2 GetCursorPosition() {
 Vec2 GetCursorOffset() {
   Vec4 cursorInfo = GetCursorInfo();
   return Vec2(cursorInfo[2], cursorInfo[3]);
+}
+
+float GetMouseScroll() {
+  return GetMouseScrollInfo();
 }
 
 // Camera update functions

@@ -26,9 +26,13 @@ int main(int argc, char *argv[]) {
   while (!WindowShouldClose()) {
 
     // Getting mouse input
-    Vec2 mouseOffset = GetCursorOffset();
-    yaw += mouseOffset.x;
-    pitch -= mouseOffset.y;
+    if (IsCursorHidden()) {
+			Vec2 mouseOffset = GetCursorOffset();
+			yaw += mouseOffset.x;
+			pitch -= mouseOffset.y;
+    }
+
+    camera.fov += GetMouseScroll();
 
     if (pitch > 89.0f)
       pitch = 89.0f;
@@ -40,6 +44,7 @@ int main(int argc, char *argv[]) {
     direction.y = sin(glm::radians(pitch));
     direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
     camera.target = glm::normalize(direction);
+    camera.target.y = 0.0f;
 
     if (IsKeyPressed(KEY_W)) {
       camera.position += camera.target * 20.0f * static_cast<float>(GetFrameTime());

@@ -14,6 +14,10 @@ static struct {
 	float sensitivity = 0.1f;
 }Cursor;
 
+static struct {
+	float yMovement = 0.0f;
+}Mouse;
+
 void framebuffer_size_callback(GLFWwindow* window, const int width, const int height){
 	glViewport(0, 0, width, height);
 	wasResized = true;
@@ -73,4 +77,13 @@ glm::vec4 GetCursorInfo() {
 void ResetMouse() {
 	Cursor.xoffset = 0.0f;
 	Cursor.yoffset = 0.0f;
+	Mouse.yMovement = 0.0f;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	Mouse.yMovement = static_cast<float>(yoffset);
+}
+
+float GetMouseScrollInfo() {
+	return Mouse.yMovement;
 }

@@ -294,6 +294,7 @@ void ShowCursor();
 bool IsCursorHidden();
 Vec2 GetCursorPosition();
 Vec2 GetCursorOffset();
+float GetMouseScroll();
 // Camera Update functions
 void UpdateCamera3D(Camera3D& camera, Vec3 direction, const float speed);
 } // namespace NimbleRenderer

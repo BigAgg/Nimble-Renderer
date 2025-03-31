@@ -17,4 +17,7 @@ void SetCursorSensitivity(const float sensitivity);
 glm::vec4 GetCursorInfo();
 void ResetMouse();
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+float GetMouseScrollInfo();
+
 #endif
