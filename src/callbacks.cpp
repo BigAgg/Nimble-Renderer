@@ -57,10 +57,10 @@ bool GetKeyReleased(const int key) {
 }
 
 void mouse_callback(GLFWwindow* window, const double xpos, const double ypos) {
-	Cursor.xoffset = xpos - Cursor.lastX;
-	Cursor.yoffset = ypos - Cursor.lastY;
-	Cursor.lastX = xpos;
-	Cursor.lastY = ypos;
+	Cursor.xoffset = static_cast<float>(xpos) - Cursor.lastX;
+	Cursor.yoffset = static_cast<float>(ypos) - Cursor.lastY;
+	Cursor.lastX = static_cast<float>(xpos);
+	Cursor.lastY = static_cast<float>(ypos);
 
 	Cursor.xoffset *= Cursor.sensitivity;
 	Cursor.yoffset *= Cursor.sensitivity;

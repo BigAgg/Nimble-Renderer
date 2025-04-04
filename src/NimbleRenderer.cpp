@@ -51,9 +51,62 @@ IN THE *	SOFTWARE.
 // Window Management
 static GLFWwindow *window;
 static int applicationExitKey = GLFW_KEY_ESCAPE;
+
+struct VertexBuffer {
+  unsigned int VAO = 0;
+  unsigned int VBO = 0;
+  unsigned int EBO = 0;
+};
+
+static VertexBuffer baseVBuffer;
+
 static unsigned int VBO;
 static unsigned int VAO;
 static unsigned int EBO;
+
+static void PopulateVertexBuffer(VertexBuffer& buffer, const unsigned int packageElements, const unsigned int attribPointers[], const unsigned int attribPointers_count, const unsigned int VBO = 0, const unsigned int EBO = 0) {
+  if (buffer.VAO == 0) {
+    glGenVertexArrays(1, &buffer.VAO);
+  }
+
+  if (VBO > 0) {
+    buffer.VBO = VBO;
+  }
+  else {
+    glGenBuffers(1, &buffer.VBO);
+  }
+  
+  if (EBO > 0) {
+    buffer.EBO = EBO;
+  }
+  else {
+    glGenBuffers(1, &buffer.EBO);
+  }
+
+  glBindVertexArray(buffer.VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, buffer.VBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.EBO);
+
+  GLsizei packSize = packageElements * sizeof(float);
+  unsigned int offset = 0;
+
+  for (unsigned int x = 0; x < attribPointers_count; x++) {
+    glVertexAttribPointer(x, attribPointers[x], GL_FLOAT, GL_FALSE, packSize, (void*)(offset * sizeof(float)));
+    glEnableVertexAttribArray(x);
+    offset += attribPointers[x];
+  }
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+
+  logging::loginfo("Populated Vertex Buffer:\tVAO: %d\tVBO: %d\tEBO: %d", buffer.VAO, buffer.VBO, buffer.EBO);
+}
+
+static void UseVertexBuffer(const VertexBuffer vertexBuffer) {
+  VAO = vertexBuffer.VAO;
+  VBO = vertexBuffer.VBO;
+  EBO = vertexBuffer.EBO;
+}
 
 // Shaders
 static Shader mainShader;
@@ -170,47 +223,18 @@ bool InitWindow(int width, int height, const char *name) {
   glfwGetWindowSize(window, &BoundingBox.width, &BoundingBox.height);
   perspectiveX = 0.0f;
   perspectiveY = 0.0f;
-  perspectiveWidth = BoundingBox.width;
-  perspectiveHeight = BoundingBox.height;
+  perspectiveWidth = static_cast<float>(BoundingBox.width);
+  perspectiveHeight = static_cast<float>(BoundingBox.height);
   return true;
 }
 
 void SetupVertexBuffer() {
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
-  // bind the Vertex Array Object first, then bind and set vertex buffer(s), and
-  // then configure vertex attributes(s).
-  glBindVertexArray(VAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  // Position Data
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-  // Color Data
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-  // Indices Data
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
-                        (void *)(7 * sizeof(float)));
-  glEnableVertexAttribArray(2);
-
-  // note that this is allowed, the call to glVertexAttribPointer registered VBO
-  // as the vertex attribute's bound vertex buffer object so afterwards we can
-  // safely unbind
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-  // remember: do NOT unbind the EBO while a VAO is active as the bound element
-  // buffer object IS stored in the VAO; keep the EBO bound.
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  // You can unbind the VAO afterwards so other VAO calls won't accidentally
-  // modify this VAO, but this rarely happens. Modifying other VAOs requires a
-  // call to glBindVertexArray anyways so we generally don't unbind VAOs (nor
-  // VBOs) when it's not directly necessary.
-  glBindVertexArray(0);
+  VertexBuffer vBuffer;
+  const unsigned int vBufferInfo[] = {
+    3, 4, 2
+  };
+  PopulateVertexBuffer(baseVBuffer, 9, vBufferInfo, 3);
+  UseVertexBuffer(baseVBuffer);
 }
 
 void *GetWindowContext() { return window; }
@@ -242,10 +266,10 @@ void BeginDrawing() {
   lastFrameTime = std::chrono::high_resolution_clock::now();
 
   // Setting up perspective
-  perspectiveX = BoundingBox.x;
-  perspectiveY = BoundingBox.y;
-  perspectiveWidth = BoundingBox.width;
-  perspectiveHeight = BoundingBox.height;
+  perspectiveX = static_cast<float>(BoundingBox.x);
+  perspectiveY = static_cast<float>(BoundingBox.y);
+  perspectiveWidth = static_cast<float>(BoundingBox.width);
+  perspectiveHeight = static_cast<float>(BoundingBox.height);
 
   // Setting up BoundingBox
   if (WasResized()) {

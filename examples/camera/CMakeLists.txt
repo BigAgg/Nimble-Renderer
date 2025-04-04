@@ -32,5 +32,5 @@ if(EXISTS ${RES_DIR})
 	)
 else()
 	# Skipping copying resources
-	message(INFO "No Resources for '${PROJECT_NAME}' to copy")
+	message(STATUS "No Resources for '${PROJECT_NAME}' to copy")
 endif()
