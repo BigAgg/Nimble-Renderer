@@ -86,10 +86,10 @@ static void PopulateVertexBuffer(VertexBuffer& buffer, const unsigned int packag
   glBindVertexArray(buffer.VAO);
   glBindBuffer(GL_ARRAY_BUFFER, buffer.VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.EBO);
-
-  GLsizei packSize = packageElements * sizeof(float);
-  unsigned int offset = 0;
-
+  
+  GLsizei packSize = packageElements * sizeof(float); // Get the size of one package
+  unsigned int offset = 0;  // Variable to calculate the offset of each vertex attribute array
+  // Generating and enabling Vertex Attribute Pointers
   for (unsigned int x = 0; x < attribPointers_count; x++) {
     glVertexAttribPointer(x, attribPointers[x], GL_FLOAT, GL_FALSE, packSize, (void*)(offset * sizeof(float)));
     glEnableVertexAttribArray(x);
@@ -294,8 +294,8 @@ void BeginMode3D(const Camera3D &camera) {
 	// Projection Matrix
 	projection = glm::perspective(glm::radians(fov), perspectiveWidth / perspectiveHeight, nearPlane, farPlane);
 	cameraDirection = glm::normalize(cameraPos - cameraTarget);
-	cameraRight = glm::normalize(glm::cross(camera.up, cameraDirection));
-	cameraUp = glm::cross(cameraDirection, cameraRight);
+	cameraRight = glm::normalize(glm::cross(camera.target, camera.up));
+	cameraUp = glm::cross(cameraRight, camera.target);
 	view = glm::lookAt(cameraPos, cameraPos + cameraTarget, cameraUp);
 }
 
@@ -496,19 +496,6 @@ void DrawTexturedCube(Vec3 Position, Texture textures[6], float rotation, Vec3 t
     // Sixth Rectangle
     20, 21, 22,
     20, 23, 22
-  };
-
-  glm::vec3 cubePositions[] = {
-      glm::vec3(0.0f,  0.0f,  0.0f),
-      glm::vec3(2.0f,  5.0f, -15.0f),
-      glm::vec3(-1.5f, -2.2f, -2.5f),
-      glm::vec3(-3.8f, -2.0f, -12.3f),
-      glm::vec3(2.4f, -0.4f, -3.5f),
-      glm::vec3(-1.7f,  3.0f, -7.5f),
-      glm::vec3(1.3f, -2.0f, -2.5f),
-      glm::vec3(1.5f,  2.0f, -2.5f),
-      glm::vec3(1.5f,  0.2f, -1.5f),
-      glm::vec3(-1.3f,  1.0f, -1.5f)
   };
 
 	// Model Matrix
@@ -726,8 +713,11 @@ float GetMouseScroll() {
 }
 
 // Camera update functions
-void UpdateCamera3D(Camera3D& camera, const Vec3 direction, const float speed) {
-  
+void UpdateCamera3D(Camera3D* camera, const float yaw, const float pitch) {
+    camera->target.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    camera->target.y = sin(glm::radians(pitch));
+    camera->target.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    camera->target = glm::normalize(camera->target);
 }
 
 } // namespace NimbleRenderer

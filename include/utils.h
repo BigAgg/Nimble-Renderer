@@ -20,19 +20,26 @@ namespace strings {
 }
 
 namespace logging {
+  bool isloggingenabled();
   void log(const std::string& type, const std::string& msg);
   template<typename... Args>
   void loginfo(const std::string& msg, Args&&... args) {
+		if (!isloggingenabled())
+			return;
     log("INFO", strings::formatString(msg, args...));
   }
 
   template<typename... Args>
   void logwarning(const std::string& msg, Args&&... args) {
+		if (!isloggingenabled())
+			return;
     log("WARNING", strings::formatString(msg, args...));
   }
 
   template<typename... Args>
   void logerror(const std::string& msg, Args&&... args) {
+		if (!isloggingenabled())
+			return;
     log("ERROR", strings::formatString(msg, args...));
   }
 
@@ -40,6 +47,9 @@ namespace logging {
   void stoplogging();
   void backuplog(const std::string& path, bool crash = false);
   void deletelog(const std::string& path);
+
+  void disablelogging();
+  void enablelogging();
 }
 
 #endif

@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   HideCursor();
   Texture t = LoadTexture("wall.jpg");
   Texture tInfo[6] = { t, t, t, t, t, t };
-  float scale = 1.0f;
+  float scale = 0.1f;
   Color c = WHITE;
     
   Vec3 position(0.0f, 0.0f, 0.0f);
@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
   float yaw = -90.0f;
   float pitch = 0.0f;
   while (!WindowShouldClose()) {
+    float deltatime = static_cast<float>(GetFrameTime());
 
     // Getting mouse input
     Vec2 mouseOffset = GetCursorOffset();
@@ -34,24 +35,20 @@ int main(int argc, char *argv[]) {
       pitch = 89.0f;
     if (pitch < -89.0f)
       pitch = -89.0f;
-
-    Vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    camera.target = glm::normalize(direction);
+    
+    UpdateCamera3D(&camera, yaw, pitch);
 
     if (IsKeyPressed(KEY_W)) {
-      camera.position += camera.target * 20.0f * static_cast<float>(GetFrameTime());
+      camera.position += camera.target * 20.0f * deltatime;
     }
     if (IsKeyPressed(KEY_S)) {
-      camera.position -= camera.target * 20.0f * static_cast<float>(GetFrameTime());
+      camera.position -= camera.target * 20.0f * deltatime;
     }
     if (IsKeyPressed(KEY_A)) {
-      camera.position -= glm::normalize(glm::cross(camera.target, camera.up)) * 20.0f * static_cast<float>(GetFrameTime());
+      camera.position -= glm::normalize(glm::cross(camera.target, camera.up)) * 20.0f * deltatime;
     }
     if (IsKeyPressed(KEY_D)) {
-      camera.position += glm::normalize(glm::cross(camera.target, camera.up)) * 20.0f * static_cast<float>(GetFrameTime());
+      camera.position += glm::normalize(glm::cross(camera.target, camera.up)) * 20.0f * deltatime;
     }
     if (IsKeyJustPressed(KEY_M)) {
       ShowCursor();
@@ -62,7 +59,7 @@ int main(int argc, char *argv[]) {
     BeginMode3D(camera);
     for (unsigned int x = 0; x < 14; x++) {
       Vec3 pos = { position.x + x * 1.8f, position.y, position.z };
-      DrawTexturedCube(pos, tInfo, (float)GetTime(), {0.5f, 0.0f, 0.0f}, {scale, scale, scale}, c);
+      DrawTexturedCube(pos, tInfo, (float)GetTime(), {0.5f, 0.0f, 0.0f}, {x*scale, x*scale, x*scale}, c);
     }
     EndMode3D();
     EndDrawing();

@@ -2,12 +2,21 @@
 
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <filesystem>
+
+
+inline std::string getTimestamp() {
+	const auto now = std::chrono::system_clock::now();
+	return std::format("{:%d-%m-%Y %H:%M:%OS}", now);
+}
 
 namespace strings {
 	bool ends_with(const std::string& value, const std::string& ending) {
-		if (ending.size() > value.size()) return false;
-		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+		return value.ends_with(ending);
+	}
+	bool starts_with(const std::string& value, const std::string& start) {
+		return value.starts_with(start);
 	}
 }
 
@@ -16,10 +25,17 @@ namespace logging {
 	static std::string logfilePath;
 	static std::string logfileName;
 	static std::streambuf* oldOutBuf;
+	static bool loggingEnabled = true;
 
 	namespace fs = std::filesystem;
 
+	bool isloggingenabled() {
+		return loggingEnabled;
+	}
+
 	void log(const std::string& type, const std::string& msg) {
+		if (!loggingEnabled)
+			return;
 		std::cout << type << ":\t" << msg << "\n";
 	}
 	void startlogging(const std::string& path, const std::string& filename) {
@@ -61,5 +77,12 @@ namespace logging {
 	}
 	void deletelog(const std::string& path) {
 		std::remove(path.c_str());
+	}
+
+	void disablelogging() {
+		loggingEnabled = false;
+	}
+	void enablelogging() {
+		loggingEnabled = true;
 	}
 }
